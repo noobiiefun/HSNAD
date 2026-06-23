@@ -1,0 +1,88 @@
+{
+  "name": "hey-streamer-notice-alert-donation",
+  "version": "1.0.0",
+  "description": "All-in-one donation alert system for streamers — Saweria, Trakteer, and more in one OBS source",
+  "main": "src/main/main.js",
+  "homepage": "./",
+  "author": "noobiiefun",
+  "license": "MIT",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:react\" \"wait-on http://localhost:3000 && npm run dev:electron\"",
+    "dev:react": "cross-env BROWSER=none react-scripts start",
+    "dev:electron": "cross-env NODE_ENV=development electron .",
+    "build": "npm run build:react && npm run build:electron",
+    "build:react": "react-scripts build",
+    "build:electron": "electron-builder --win --x64",
+    "pack": "electron-builder --dir",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "electron-store": "^8.1.0",
+    "express": "^4.18.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0",
+    "socket.io": "^4.6.1",
+    "socket.io-client": "^4.6.1",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.4.0",
+    "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "react-scripts": "5.0.1",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.noobiiefun.hey-streamer",
+    "productName": "Hey Streamer",
+    "directories": {
+      "buildResources": "build-assets",
+      "output": "dist"
+    },
+    "files": [
+      "build/**/*",
+      "src/main/**/*",
+      "src/server/**/*",
+      "src/shared/**/*",
+      "overlay/**/*",
+      "public/sounds/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build-assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Hey Streamer"
+    },
+    "extraResources": [
+      {
+        "from": "overlay",
+        "to": "overlay"
+      },
+      {
+        "from": "public/sounds",
+        "to": "sounds"
+      }
+    ]
+  },
+  "browserslist": {
+    "production": [">0.2%", "not dead", "not op_mini all"],
+    "development": ["last 1 chrome version"]
+  }
+}
