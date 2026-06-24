@@ -5,18 +5,17 @@ import './Layout.css';
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
 const NAV_ITEMS = [
-  { path: '/dashboard',   icon: '⚡', label: 'Dashboard' },
-  { path: '/overlay',     icon: '🎬', label: 'Overlay & OBS' },
+  { path: '/dashboard', icon: '⚡', label: 'Dashboard' },
+  { path: '/overlay',   icon: '🎬', label: 'Overlay & OBS' },
 ];
 
 const PLATFORM_ITEMS = [
-  { key: 'saweria',    label: 'Saweria',    emoji: '🟢', status: 'supported' },
-  { key: 'trakteer',   label: 'Trakteer',   emoji: '🟡', status: 'coming-soon' },
-  { key: 'sociabuzz',  label: 'SociaBuzz',  emoji: '🟡', status: 'coming-soon' },
+  { key: 'saweria',   label: 'Saweria',   emoji: '🟢', status: 'supported' },
+  { key: 'trakteer',  label: 'Trakteer',  emoji: '🟡', status: 'coming-soon' },
+  { key: 'sociabuzz', label: 'SociaBuzz', emoji: '🟡', status: 'coming-soon' },
 ];
 
 export default function Layout() {
-  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleMinimize = () => window.electronAPI?.minimizeWindow();
@@ -25,36 +24,51 @@ export default function Layout() {
 
   return (
     <div className="app-shell">
+
       {/* Custom Titlebar — only in Electron */}
       {isElectron && (
         <div className="titlebar" data-electron-drag="true">
           <div className="titlebar-left">
-            <span className="titlebar-logo">🎙️</span>
-            <span className="titlebar-title">Hey Streamer</span>
+            <img
+              src="/logo-icon.png"
+              alt="HSNAD"
+              className="titlebar-logo-img"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+            <span className="titlebar-title">HSNAD</span>
+            <span className="titlebar-subtitle">Hey Streamer</span>
           </div>
           <div className="titlebar-controls">
             <button onClick={handleMinimize} className="tb-btn tb-min" title="Minimize">─</button>
             <button onClick={handleMaximize} className="tb-btn tb-max" title="Maximize">□</button>
-            <button onClick={handleClose}    className="tb-btn tb-close" title="Close">✕</button>
+            <button onClick={handleClose}    className="tb-btn tb-close" title="Close to Tray">✕</button>
           </div>
         </div>
       )}
 
       <div className="app-body">
+
         {/* Sidebar */}
         <aside className={`sidebar ${sidebarOpen ? 'open' : 'collapsed'}`}>
+
+          {/* Brand / Logo area */}
           <div className="sidebar-brand">
-            <span className="brand-icon">🎙️</span>
+            <img
+              src="/logo-icon.png"
+              alt="HSNAD"
+              className="brand-logo"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
             {sidebarOpen && (
               <div className="brand-text">
-                <div className="brand-name">Hey Streamer</div>
+                <div className="brand-name">HSNAD</div>
                 <div className="brand-sub">Notice Alert Donation</div>
               </div>
             )}
           </div>
 
           <nav className="sidebar-nav">
-            <div className="nav-section-label">{sidebarOpen && 'General'}</div>
+            {sidebarOpen && <div className="nav-section-label">General</div>}
             {NAV_ITEMS.map((item) => (
               <NavLink
                 key={item.path}
@@ -66,7 +80,7 @@ export default function Layout() {
               </NavLink>
             ))}
 
-            <div className="nav-section-label">{sidebarOpen && 'Platforms'}</div>
+            {sidebarOpen && <div className="nav-section-label">Platforms</div>}
             {PLATFORM_ITEMS.map((p) => (
               <NavLink
                 key={p.key}
@@ -89,13 +103,27 @@ export default function Layout() {
             ))}
           </nav>
 
-          <button
-            className="sidebar-toggle"
-            onClick={() => setSidebarOpen((v) => !v)}
-            title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            {sidebarOpen ? '◀' : '▶'}
-          </button>
+          {/* Sidebar footer — versi & toggle */}
+          <div className="sidebar-footer">
+            {sidebarOpen && (
+              <div className="sidebar-version">
+                <img
+                  src="/logo-full.png"
+                  alt="HSNAD"
+                  className="footer-logo"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+                <span className="version-text">v1.0.0</span>
+              </div>
+            )}
+            <button
+              className="sidebar-toggle"
+              onClick={() => setSidebarOpen((v) => !v)}
+              title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+            >
+              {sidebarOpen ? '◀' : '▶'}
+            </button>
+          </div>
         </aside>
 
         {/* Main content */}

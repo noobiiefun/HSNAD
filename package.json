@@ -54,6 +54,11 @@
       "node_modules/**/*",
       "package.json"
     ],
+    "extraResources": [
+      { "from": "overlay",        "to": "overlay" },
+      { "from": "public/sounds",  "to": "sounds" },
+      { "from": "build-assets",   "to": "build-assets" }
+    ],
     "win": {
       "target": [
         {
@@ -70,16 +75,6 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Hey Streamer"
     },
-    "extraResources": [
-      {
-        "from": "overlay",
-        "to": "overlay"
-      },
-      {
-        "from": "public/sounds",
-        "to": "sounds"
-      }
-    ]
   },
   "browserslist": {
     "production": [">0.2%", "not dead", "not op_mini all"],

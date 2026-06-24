@@ -79,6 +79,15 @@ export default function Dashboard() {
   return (
     <div className="dashboard">
       <div className="page-header">
+        <div className="page-header-top">
+          <img
+            src="/logo-full.png"
+            alt="HSNAD"
+            className="page-logo"
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+          <div className="page-header-badge">v1.0.0</div>
+        </div>
         <h1>Dashboard</h1>
         <p className="page-sub">Monitor semua alert donasi kamu dalam satu tempat</p>
       </div>

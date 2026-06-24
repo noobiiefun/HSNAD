@@ -1,6 +1,33 @@
 .dashboard { max-width: 860px; }
 
 .page-header { margin-bottom: 28px; }
+
+.page-header-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.page-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(229,168,50,0.2));
+}
+
+.page-header-badge {
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(50,195,166,0.3);
+  letter-spacing: 0.5px;
+  margin-left: auto;
+}
+
 .page-header h1 { font-size: 24px; font-weight: 700; margin: 0 0 4px; }
 .page-sub { color: var(--text-secondary); font-size: 14px; margin: 0; }
 
