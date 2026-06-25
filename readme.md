@@ -173,3 +173,42 @@ Pull request welcome! Untuk perubahan besar, buka issue dulu ya.
 ## 📝 License
 
 MIT © [noobiiefun](https://github.com/noobiiefun)
+
+---
+
+## 📦 Changelog
+
+### v1.0.0 — Step 2 Update
+
+**🔊 Sound System**
+- 4 built-in sound: Bell (default), Coin, Chime, Pop
+- Support Custom Sound URL (link ke file .wav/.mp3/.ogg)
+- Volume control per platform (0–100%)
+- Sound dimainkan 200ms setelah alert muncul (sinkron visual)
+
+**✨ Overlay Upgrade**
+- 8 animasi masuk: fadeIn, slideDown, slideLeft, slideRight, bounceIn, zoomIn, flipInX, rollIn
+- 6 animasi keluar: fadeOut, slideUp, slideLeft, slideRight, zoomOut, flipOutX
+- 7 animasi teks highlight: wiggle, bounce, shake, flash, pulse, rubberBand
+- Glowing border animasi (gradient gold → teal)
+- Platform badge di atas alert box
+- Support Google Fonts (load otomatis)
+- Pesan donatur tampil italic di bawah teks utama
+- Background transparent mode yang benar untuk OBS
+
+**📊 Alert History**
+- Riwayat 200 donasi terakhir tersimpan in-memory
+- Tampil di Dashboard: nama, pesan, jumlah, waktu, platform badge
+- Stats: total donasi, total Rupiah, breakdown per platform
+- Clear history button
+
+**⚡ Dashboard Realtime**
+- Socket.IO live connection indicator (● Live / ○ Offline)
+- Queue status update tanpa perlu refresh
+- Stats card: total donasi, total Rupiah, queue length, status live/idle
+
+**⚙️ Platform Settings UX**
+- Toggle show/hide stream key
+- Auto-restart polling setelah save (tidak perlu restart app)
+- Panduan step-by-step cara dapat stream key Saweria
+- Verify button lebih responsif

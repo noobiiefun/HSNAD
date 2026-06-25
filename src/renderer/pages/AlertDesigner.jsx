@@ -1,38 +1,78 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './AlertDesigner.css';
 
 const API = 'http://localhost:5174/api';
 
-const ANIMATIONS_IN  = ['fadeIn', 'slideIn', 'bounceIn'];
-const ANIMATIONS_OUT = ['fadeOut', 'slideOut'];
-const TEXT_ANIMS     = ['none', 'wiggle'];
-const LAYOUTS        = ['image-above-text', 'image-left-text', 'text-only'];
-const FONTS          = ['Inter', 'Poppins', 'Roboto', 'Open Sans', 'Montserrat', 'Bebas Neue'];
+const ANIMATIONS_IN  = [
+  { value: 'fadeIn',       label: '✨ Fade In' },
+  { value: 'slideIn',      label: '⬇ Slide Down' },
+  { value: 'slideInLeft',  label: '⬅ Slide Left' },
+  { value: 'slideInRight', label: '➡ Slide Right' },
+  { value: 'bounceIn',     label: '🏀 Bounce In' },
+  { value: 'zoomIn',       label: '🔍 Zoom In' },
+  { value: 'flipInX',      label: '🔄 Flip In' },
+  { value: 'rollIn',       label: '🎲 Roll In' },
+];
+const ANIMATIONS_OUT = [
+  { value: 'fadeOut',      label: '✨ Fade Out' },
+  { value: 'slideOut',     label: '⬆ Slide Up' },
+  { value: 'slideOutLeft', label: '⬅ Slide Left' },
+  { value: 'slideOutRight',label: '➡ Slide Right' },
+  { value: 'zoomOut',      label: '🔍 Zoom Out' },
+  { value: 'flipOutX',     label: '🔄 Flip Out' },
+];
+const TEXT_ANIMS = [
+  { value: 'none',       label: 'None' },
+  { value: 'wiggle',     label: '〰 Wiggle' },
+  { value: 'bounce',     label: '⬆ Bounce' },
+  { value: 'shake',      label: '↔ Shake' },
+  { value: 'flash',      label: '⚡ Flash' },
+  { value: 'pulse',      label: '💓 Pulse' },
+  { value: 'rubberBand', label: '🪤 Rubber Band' },
+];
+const LAYOUTS = [
+  { value: 'image-above-text', label: '📷 Image di atas teks' },
+  { value: 'image-left-text',  label: '◀ Image kiri teks' },
+  { value: 'text-only',        label: '📝 Teks saja' },
+];
+const FONTS = [
+  'Inter','Poppins','Roboto','Open Sans','Montserrat',
+  'Bebas Neue','Oswald','Raleway','Nunito','Exo 2','Orbitron',
+];
+const SOUNDS = [
+  { value: 'none',    label: '🔇 Tidak ada' },
+  { value: 'default', label: '🔔 Bell (Default)' },
+  { value: 'coin',    label: '🪙 Coin' },
+  { value: 'chime',   label: '🎵 Chime' },
+  { value: 'pop',     label: '💥 Pop' },
+  { value: 'custom',  label: '🎵 Custom URL' },
+];
 
 export default function AlertDesigner() {
-  const { key } = useParams();
-  const navigate = useNavigate();
-  const [alert, setAlert] = useState(null);
-  const [saved, setSaved] = useState(false);
+  const { key }    = useParams();
+  const navigate   = useNavigate();
+  const [cfg, setCfg]         = useState(null);
+  const [saved, setSaved]     = useState(false);
   const [testing, setTesting] = useState(false);
+  const iframeRef = useRef(null);
 
   useEffect(() => {
     fetch(`${API}/config/platform/${key}`)
-      .then((r) => r.json())
-      .then((data) => setAlert(data.alert || {}))
+      .then(r => r.json())
+      .then(data => setCfg(data.alert || {}))
       .catch(() => {});
   }, [key]);
 
   function set(field, value) {
-    setAlert((prev) => ({ ...prev, [field]: value }));
+    setCfg(prev => ({ ...prev, [field]: value }));
   }
 
   async function save() {
     await fetch(`${API}/config/platform/${key}/alert`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(alert),
+      body: JSON.stringify(cfg),
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -45,198 +85,263 @@ export default function AlertDesigner() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ platform: key }),
     });
-    setTimeout(() => setTesting(false), 1500);
+    setTimeout(() => setTesting(false), 2000);
   }
 
-  if (!alert) return <div className="loading">Loading...</div>;
+  if (!cfg) return <div className="ad-loading">Loading...</div>;
 
-  const platformName = key.charAt(0).toUpperCase() + key.slice(1);
+  const name = key.charAt(0).toUpperCase() + key.slice(1);
 
   return (
     <div className="alert-designer">
-      <div className="page-header">
-        <button className="btn-back" onClick={() => navigate(`/platform/${key}`)}>← Back to {platformName}</button>
-        <h1>🎨 Alert Designer — {platformName}</h1>
-        <p className="page-sub">Customisasi tampilan, animasi, dan teks notifikasi donasi</p>
+      <div className="ad-header">
+        <button className="btn-back" onClick={() => navigate(`/platform/${key}`)}>
+          ← Back to {name}
+        </button>
+        <div className="ad-title-row">
+          <h1>🎨 Alert Designer — {name}</h1>
+          <div className="ad-actions">
+            <button className={`btn-test ${testing ? 'active' : ''}`} onClick={testAlert} disabled={testing}>
+              {testing ? '⏳ Sending...' : '🧪 Test Alert'}
+            </button>
+            <button className="btn-save" onClick={save}>
+              {saved ? '✓ Tersimpan!' : '💾 Save'}
+            </button>
+          </div>
+        </div>
+        <p className="ad-sub">Kustomisasi tampilan alert per platform. Klik "Test Alert" untuk preview langsung di overlay.</p>
       </div>
 
-      <div className="designer-layout">
-        {/* Left: Settings panels */}
-        <div className="designer-panels">
+      <div className="ad-layout">
+        {/* ── LEFT: Settings panels ── */}
+        <div className="ad-panels">
 
           {/* Enable */}
           <div className="panel">
-            <div className="panel-title">General</div>
-            <div className="field-row">
-              <div>
-                <div className="label">Enable Alert</div>
-                <div className="hint">Tampilkan notifikasi saat ada donasi</div>
-              </div>
-              <label className="toggle">
-                <input type="checkbox" checked={alert.enabled ?? true}
-                  onChange={(e) => set('enabled', e.target.checked)} />
-                <span className="toggle-track" />
-              </label>
-            </div>
+            <div className="panel-title">⚙️ General</div>
+            <FieldRow label="Aktifkan Alert" hint="Tampilkan notifikasi saat donasi masuk">
+              <Toggle checked={cfg.enabled ?? true} onChange={v => set('enabled', v)} />
+            </FieldRow>
           </div>
 
           {/* Message */}
           <div className="panel">
-            <div className="panel-title">Message</div>
-            <div className="field-col">
-              <label className="label">Message Template</label>
-              <div className="hint">Gunakan <code>{'{name}'}</code> <code>{'{amount}'}</code> <code>{'{message}'}</code></div>
-              <input className="input" type="text" value={alert.messageTemplate || ''}
-                onChange={(e) => set('messageTemplate', e.target.value)} />
-            </div>
+            <div className="panel-title">💬 Pesan</div>
+            <FieldCol label="Message Template"
+              hint={<>Gunakan <code>{'{name}'}</code> <code>{'{amount}'}</code> <code>{'{message}'}</code></>}>
+              <input className="input" type="text"
+                value={cfg.messageTemplate || ''}
+                onChange={e => set('messageTemplate', e.target.value)} />
+            </FieldCol>
           </div>
 
-          {/* Image & Layout */}
+          {/* Layout & Image */}
           <div className="panel">
-            <div className="panel-title">Image & Layout</div>
-            <div className="field-col">
-              <label className="label">Layout</label>
-              <select className="input select" value={alert.layout || 'image-above-text'}
-                onChange={(e) => set('layout', e.target.value)}>
-                {LAYOUTS.map((l) => (
-                  <option key={l} value={l}>{l.replace(/-/g, ' ')}</option>
-                ))}
+            <div className="panel-title">🖼 Layout & Gambar</div>
+            <FieldCol label="Layout">
+              <select className="input select" value={cfg.layout || 'image-above-text'}
+                onChange={e => set('layout', e.target.value)}>
+                {LAYOUTS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
               </select>
-            </div>
-            <div className="field-col">
-              <label className="label">Image URL</label>
-              <input className="input" type="text" placeholder="https://... atau kosongkan"
-                value={alert.imageUrl || ''}
-                onChange={(e) => set('imageUrl', e.target.value)} />
-            </div>
-            <div className="field-col">
-              <label className="label">Image Size — {alert.imageSize || 50}%</label>
-              <input type="range" min="20" max="100" value={alert.imageSize || 50}
-                onChange={(e) => set('imageSize', Number(e.target.value))} />
-            </div>
+            </FieldCol>
+            <FieldCol label="Image URL" hint="URL gambar/GIF — kosongkan jika tidak ada">
+              <input className="input" type="text" placeholder="https://..."
+                value={cfg.imageUrl || ''}
+                onChange={e => set('imageUrl', e.target.value)} />
+            </FieldCol>
+            <FieldCol label={`Ukuran Image — ${cfg.imageSize || 50}%`}>
+              <input type="range" min="20" max="100" value={cfg.imageSize || 50}
+                onChange={e => set('imageSize', Number(e.target.value))} />
+            </FieldCol>
           </div>
 
-          {/* Duration */}
+          {/* Timing */}
           <div className="panel">
-            <div className="panel-title">Timing</div>
-            <div className="field-col">
-              <label className="label">Alert Duration — {alert.duration || 8}s</label>
-              <input type="range" min="3" max="30" value={alert.duration || 8}
-                onChange={(e) => set('duration', Number(e.target.value))} />
-            </div>
-            <div className="field-col">
-              <label className="label">Text Delay — {alert.textDelay || 1}s</label>
-              <div className="hint">Jeda sebelum teks muncul setelah alert</div>
-              <input type="range" min="0" max="5" step="0.5" value={alert.textDelay || 1}
-                onChange={(e) => set('textDelay', Number(e.target.value))} />
-            </div>
+            <div className="panel-title">⏱ Timing</div>
+            <FieldCol label={`Durasi Alert — ${cfg.duration || 8}s`}
+              hint="Berapa detik alert tampil di layar">
+              <input type="range" min="3" max="30" value={cfg.duration || 8}
+                onChange={e => set('duration', Number(e.target.value))} />
+            </FieldCol>
+            <FieldCol label={`Text Delay — ${cfg.textDelay || 0.5}s`}
+              hint="Jeda sebelum teks muncul">
+              <input type="range" min="0" max="5" step="0.5" value={cfg.textDelay || 0.5}
+                onChange={e => set('textDelay', Number(e.target.value))} />
+            </FieldCol>
           </div>
 
           {/* Animation */}
           <div className="panel">
-            <div className="panel-title">Animation</div>
-            <div className="field-row">
-              <div className="field-col" style={{ flex: 1 }}>
-                <label className="label">Animasi Masuk</label>
-                <select className="input select" value={alert.animationIn || 'fadeIn'}
-                  onChange={(e) => set('animationIn', e.target.value)}>
-                  {ANIMATIONS_IN.map((a) => <option key={a} value={a}>{a}</option>)}
+            <div className="panel-title">✨ Animasi</div>
+            <div className="two-col">
+              <FieldCol label="Animasi Masuk">
+                <select className="input select" value={cfg.animationIn || 'bounceIn'}
+                  onChange={e => set('animationIn', e.target.value)}>
+                  {ANIMATIONS_IN.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
                 </select>
-              </div>
-              <div className="field-col" style={{ flex: 1 }}>
-                <label className="label">Animasi Keluar</label>
-                <select className="input select" value={alert.animationOut || 'fadeOut'}
-                  onChange={(e) => set('animationOut', e.target.value)}>
-                  {ANIMATIONS_OUT.map((a) => <option key={a} value={a}>{a}</option>)}
+              </FieldCol>
+              <FieldCol label="Animasi Keluar">
+                <select className="input select" value={cfg.animationOut || 'fadeOut'}
+                  onChange={e => set('animationOut', e.target.value)}>
+                  {ANIMATIONS_OUT.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
                 </select>
-              </div>
+              </FieldCol>
             </div>
-            <div className="field-col">
-              <label className="label">Text Animation</label>
-              <select className="input select" value={alert.textAnimation || 'wiggle'}
-                onChange={(e) => set('textAnimation', e.target.value)}>
-                {TEXT_ANIMS.map((a) => <option key={a} value={a}>{a}</option>)}
+            <FieldCol label="Animasi Teks Highlight">
+              <select className="input select" value={cfg.textAnimation || 'wiggle'}
+                onChange={e => set('textAnimation', e.target.value)}>
+                {TEXT_ANIMS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
               </select>
-            </div>
+            </FieldCol>
           </div>
 
-          {/* Font & Color */}
+          {/* Sound */}
           <div className="panel">
-            <div className="panel-title">Font & Colors</div>
-            <div className="field-col">
-              <label className="label">Font</label>
-              <select className="input select" value={alert.font || 'Inter'}
-                onChange={(e) => set('font', e.target.value)}>
-                {FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
+            <div className="panel-title">🔊 Suara</div>
+            <FieldCol label="Sound Alert">
+              <select className="input select" value={cfg.sound || 'default'}
+                onChange={e => set('sound', e.target.value)}>
+                {SOUNDS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
-            </div>
-            <div className="field-row">
-              <div className="field-col" style={{ flex: 1 }}>
-                <label className="label">Font Size — {alert.fontSize || 32}px</label>
-                <input type="range" min="16" max="80" value={alert.fontSize || 32}
-                  onChange={(e) => set('fontSize', Number(e.target.value))} />
-              </div>
-              <div className="field-col" style={{ flex: 1 }}>
-                <label className="label">Font Weight</label>
-                <select className="input select" value={alert.fontWeight || '700'}
-                  onChange={(e) => set('fontWeight', e.target.value)}>
-                  {['400','500','600','700','800','900'].map((w) => (
+            </FieldCol>
+            {cfg.sound === 'custom' && (
+              <FieldCol label="Custom Sound URL" hint="Link langsung ke file .ogg / .mp3 / .wav">
+                <input className="input" type="text" placeholder="https://... atau /sounds/custom.ogg"
+                  value={cfg.soundUrl || ''}
+                  onChange={e => set('soundUrl', e.target.value)} />
+              </FieldCol>
+            )}
+            {cfg.sound !== 'none' && (
+              <FieldCol label={`Volume — ${cfg.soundVolume ?? 70}%`}>
+                <input type="range" min="0" max="100" value={cfg.soundVolume ?? 70}
+                  onChange={e => set('soundVolume', Number(e.target.value))} />
+              </FieldCol>
+            )}
+          </div>
+
+          {/* Font */}
+          <div className="panel">
+            <div className="panel-title">🔤 Font</div>
+            <FieldCol label="Font Family">
+              <select className="input select" value={cfg.font || 'Inter'}
+                onChange={e => set('font', e.target.value)}>
+                {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </FieldCol>
+            <div className="two-col">
+              <FieldCol label={`Ukuran — ${cfg.fontSize || 28}px`}>
+                <input type="range" min="14" max="80" value={cfg.fontSize || 28}
+                  onChange={e => set('fontSize', Number(e.target.value))} />
+              </FieldCol>
+              <FieldCol label="Ketebalan">
+                <select className="input select" value={cfg.fontWeight || '700'}
+                  onChange={e => set('fontWeight', e.target.value)}>
+                  {['400','500','600','700','800','900'].map(w => (
                     <option key={w} value={w}>{w}</option>
                   ))}
                 </select>
-              </div>
-            </div>
-            <div className="colors-row">
-              <div className="color-field">
-                <label className="label">Text Color</label>
-                <div className="color-row">
-                  <input type="color" value={alert.textColor || '#FFFFFF'}
-                    onChange={(e) => set('textColor', e.target.value)} />
-                  <input className="input" type="text" value={alert.textColor || '#FFFFFF'}
-                    onChange={(e) => set('textColor', e.target.value)} />
-                </div>
-              </div>
-              <div className="color-field">
-                <label className="label">Highlight Color</label>
-                <div className="color-row">
-                  <input type="color" value={alert.highlightColor || '#32C3A6'}
-                    onChange={(e) => set('highlightColor', e.target.value)} />
-                  <input className="input" type="text" value={alert.highlightColor || '#32C3A6'}
-                    onChange={(e) => set('highlightColor', e.target.value)} />
-                </div>
-              </div>
+              </FieldCol>
             </div>
           </div>
+
+          {/* Colors */}
+          <div className="panel">
+            <div className="panel-title">🎨 Warna</div>
+            <div className="colors-grid">
+              <ColorField label="Warna Teks"     value={cfg.textColor      || '#FFFFFF'}  onChange={v => set('textColor', v)} />
+              <ColorField label="Warna Highlight" value={cfg.highlightColor || '#32C3A6'} onChange={v => set('highlightColor', v)} />
+            </div>
+            <FieldCol label="Background" hint="Gunakan 'transparent' agar OBS tidak ada kotak">
+              <div className="bg-options">
+                <button
+                  className={`bg-opt ${(!cfg.backgroundColor || cfg.backgroundColor === 'transparent') ? 'active' : ''}`}
+                  onClick={() => set('backgroundColor', 'transparent')}
+                >Transparent</button>
+                <button
+                  className={`bg-opt ${cfg.backgroundColor === 'rgba(15,15,23,0.88)' ? 'active' : ''}`}
+                  onClick={() => set('backgroundColor', 'rgba(15,15,23,0.88)')}
+                >Dark</button>
+                <button
+                  className={`bg-opt ${cfg.backgroundColor === 'rgba(0,0,0,0.7)' ? 'active' : ''}`}
+                  onClick={() => set('backgroundColor', 'rgba(0,0,0,0.7)')}
+                >Black</button>
+                <input className="input" type="text" placeholder="rgba(...) atau #hex"
+                  value={cfg.backgroundColor || 'transparent'}
+                  onChange={e => set('backgroundColor', e.target.value)}
+                  style={{ flex: 1, minWidth: 0 }} />
+              </div>
+            </FieldCol>
+          </div>
+
         </div>
 
-        {/* Right: Preview panel */}
-        <div className="preview-panel">
-          <div className="preview-title">Live Preview</div>
+        {/* ── RIGHT: Live Preview ── */}
+        <div className="ad-preview">
+          <div className="preview-header">
+            <span className="preview-label">🔴 Live Overlay Preview</span>
+            <button className="btn-refresh" onClick={() => {
+              if (iframeRef.current) iframeRef.current.src += '';
+            }}>↺ Refresh</button>
+          </div>
           <div className="preview-frame">
             <iframe
+              ref={iframeRef}
               src="http://localhost:5174/overlay"
-              title="Alert Preview"
+              title="Overlay Preview"
               className="preview-iframe"
             />
           </div>
           <div className="preview-hint">
-            Preview ini adalah overlay asli yang sama dengan yang di OBS
+            Ini adalah overlay asli yang sama persis dengan yang tampil di OBS
+          </div>
+          <div className="preview-obssize">
+            Rekomendasi OBS Browser Source: <strong>400 × 300 px</strong>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Bottom actions */}
-      <div className="bottom-actions">
-        <button className="btn-primary" onClick={save}>
-          {saved ? '✓ Tersimpan!' : '💾 Save Alert Settings'}
-        </button>
-        <button
-          className={`btn-test ${testing ? 'active' : ''}`}
-          onClick={testAlert}
-          disabled={testing}
-        >
-          {testing ? '⏳ Sending...' : '🧪 Test Alert'}
-        </button>
+// ── Sub-components ────────────────────────────────────────────────────────────
+function Toggle({ checked, onChange }) {
+  return (
+    <label className="toggle">
+      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} />
+      <span className="toggle-track" />
+    </label>
+  );
+}
+
+function FieldRow({ label, hint, children }) {
+  return (
+    <div className="field-row">
+      <div>
+        <div className="label">{label}</div>
+        {hint && <div className="hint">{hint}</div>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function FieldCol({ label, hint, children }) {
+  return (
+    <div className="field-col">
+      <label className="label">{label}</label>
+      {hint && <div className="hint">{hint}</div>}
+      {children}
+    </div>
+  );
+}
+
+function ColorField({ label, value, onChange }) {
+  return (
+    <div className="color-field">
+      <label className="label">{label}</label>
+      <div className="color-row">
+        <input type="color" value={value} onChange={e => onChange(e.target.value)} />
+        <input className="input" type="text" value={value} onChange={e => onChange(e.target.value)} />
       </div>
     </div>
   );

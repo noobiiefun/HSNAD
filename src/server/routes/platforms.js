@@ -1,69 +1,70 @@
 const express = require('express');
-const router = express.Router();
-const axios = require('axios');
+const router  = express.Router();
+const axios   = require('axios');
 
-// GET /api/platforms — list platform yang tersedia
+// GET /api/platforms
 router.get('/', (req, res) => {
-  const platforms = [
+  res.json([
     {
       key: 'saweria',
       name: 'Saweria',
-      logo: '/overlay/assets/saweria-logo.png',
       status: 'supported',
+      color: '#32C3A6',
       fields: [
-        { key: 'streamKey', label: 'Stream Key', type: 'password', required: true },
-        { key: 'pollingInterval', label: 'Polling Interval (ms)', type: 'number', default: 5000 },
-        { key: 'minAmount', label: 'Minimum Amount (IDR)', type: 'number', default: 0 },
+        { key: 'streamKey',       label: 'Stream Key',             type: 'password', required: true },
+        { key: 'pollingInterval', label: 'Polling Interval (ms)',  type: 'number',   default: 5000 },
+        { key: 'minAmount',       label: 'Minimum Donasi (IDR)',   type: 'number',   default: 0 },
       ],
     },
-    {
-      key: 'trakteer',
-      name: 'Trakteer',
-      logo: '/overlay/assets/trakteer-logo.png',
-      status: 'coming-soon',
-      fields: [],
-    },
-    {
-      key: 'sociabuzz',
-      name: 'SociaBuzz',
-      logo: '/overlay/assets/sociabuzz-logo.png',
-      status: 'coming-soon',
-      fields: [],
-    },
-    {
-      key: 'streamlabs',
-      name: 'Streamlabs',
-      logo: '/overlay/assets/streamlabs-logo.png',
-      status: 'planned',
-      fields: [],
-    },
-  ];
-
-  res.json(platforms);
+    { key: 'trakteer',  name: 'Trakteer',  status: 'coming-soon', color: '#E5A832', fields: [] },
+    { key: 'sociabuzz', name: 'SociaBuzz', status: 'coming-soon', color: '#9B59B6', fields: [] },
+    { key: 'streamlabs',name: 'Streamlabs',status: 'planned',     color: '#53A9D8', fields: [] },
+  ]);
 });
 
-// POST /api/platforms/saweria/verify — test stream key valid
+// POST /api/platforms/saweria/verify — cek stream key valid
 router.post('/saweria/verify', async (req, res) => {
   const { streamKey } = req.body;
-  if (!streamKey) return res.status(400).json({ valid: false, error: 'Stream key required' });
+  if (!streamKey) return res.status(400).json({ valid: false, error: 'Stream key wajib diisi' });
 
   try {
     const response = await axios.get('https://streaming.saweria.co/transactions', {
       headers: { streamkey: streamKey },
       timeout: 8000,
     });
-
-    if (response.status === 200) {
-      res.json({ valid: true, message: 'Stream key valid!' });
-    } else {
-      res.json({ valid: false, error: 'Invalid stream key' });
-    }
+    res.json(response.status === 200
+      ? { valid: true,  message: 'Stream key valid! ✓' }
+      : { valid: false, error: 'Stream key tidak valid' }
+    );
   } catch (err) {
-    if (err.response?.status === 401) {
-      res.json({ valid: false, error: 'Stream key tidak valid' });
-    } else {
-      res.json({ valid: false, error: 'Tidak bisa terhubung ke Saweria' });
+    res.json(err.response?.status === 401
+      ? { valid: false, error: 'Stream key tidak valid atau sudah expired' }
+      : { valid: false, error: `Tidak bisa terhubung ke Saweria (${err.message})` }
+    );
+  }
+});
+
+// POST /api/platforms/saweria/restart — restart polling (dipanggil setelah save config)
+router.post('/saweria/restart', (req, res) => {
+  // Lazy import untuk hindari circular
+  try {
+    const SaweriaService = require('../services/saweria');
+    const { configService, alertQueue } = req.app.locals;
+    const cfg = configService.getPlatform('saweria');
+
+    if (req.app.locals.saweriaService) {
+      req.app.locals.saweriaService.stopPolling();
     }
+
+    if (cfg?.enabled && cfg?.streamKey) {
+      req.app.locals.saweriaService = new SaweriaService(cfg.streamKey, alertQueue);
+      req.app.locals.saweriaService.startPolling(cfg.pollingInterval || 5000);
+      res.json({ success: true, message: 'Saweria polling restarted' });
+    } else {
+      res.json({ success: true, message: 'Polling stopped (disabled or no key)' });
+    }
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
   }
 });
 

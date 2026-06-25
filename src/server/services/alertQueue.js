@@ -1,73 +1,70 @@
 const { v4: uuidv4 } = require('uuid');
 
 class AlertQueueService {
-  constructor(io) {
-    this.io = io;
-    this.queue = [];
-    this.isPlaying = false;
-    this.currentAlert = null;
+  constructor(io, historyService) {
+    this.io       = io;
+    this.history  = historyService;
+    this.queue    = [];
+    this.isPlaying= false;
+    this.current  = null;
   }
 
   push(alertData) {
-    const alert = {
-      id: uuidv4(),
-      ...alertData,
-      queuedAt: Date.now(),
-    };
-
+    const alert = { id: uuidv4(), ...alertData, queuedAt: Date.now() };
     this.queue.push(alert);
-    console.log(`[Queue] Alert added: ${alert.platform} from ${alert.donorName} — Queue length: ${this.queue.length}`);
-
-    if (!this.isPlaying) {
-      this._playNext();
-    }
+    console.log(`[Queue] +${alert.platform}/${alert.donorName} | Q:${this.queue.length}`);
+    if (!this.isPlaying) this._next();
+    // Broadcast queue length update ke dashboard
+    this.io.emit('queue:update', this.getStatus());
   }
 
-  _playNext() {
-    if (this.queue.length === 0) {
+  _next() {
+    if (!this.queue.length) {
       this.isPlaying = false;
-      this.currentAlert = null;
+      this.current   = null;
+      this.io.emit('queue:update', this.getStatus());
       return;
     }
-
     this.isPlaying = true;
-    this.currentAlert = this.queue.shift();
+    this.current   = this.queue.shift();
 
-    // Emit ke semua overlay yang connected
-    this.io.emit('alert:show', this.currentAlert);
-    console.log(`[Queue] Playing alert: ${this.currentAlert.id}`);
+    // Catat ke history
+    if (this.history) this.history.add(this.current);
+
+    this.io.emit('alert:show',   this.current);
+    this.io.emit('queue:update', this.getStatus());
+    console.log(`[Queue] Playing: ${this.current.id}`);
   }
 
-  // Dipanggil oleh overlay saat alert selesai tampil
   alertDone(alertId) {
-    if (this.currentAlert?.id === alertId) {
-      console.log(`[Queue] Alert done: ${alertId}`);
-      // Delay sedikit sebelum alert berikutnya
-      setTimeout(() => this._playNext(), 500);
+    if (this.current?.id === alertId) {
+      console.log(`[Queue] Done: ${alertId}`);
+      setTimeout(() => this._next(), 500);
     }
   }
 
   skip() {
-    if (this.currentAlert) {
+    if (this.current) {
       this.io.emit('alert:skip');
-      setTimeout(() => this._playNext(), 300);
+      setTimeout(() => this._next(), 300);
     }
   }
 
   clear() {
     this.queue = [];
-    if (this.currentAlert) {
+    if (this.current) {
       this.io.emit('alert:skip');
       this.isPlaying = false;
-      this.currentAlert = null;
+      this.current   = null;
     }
+    this.io.emit('queue:update', this.getStatus());
   }
 
   getStatus() {
     return {
-      isPlaying: this.isPlaying,
+      isPlaying:   this.isPlaying,
       queueLength: this.queue.length,
-      currentAlert: this.currentAlert,
+      currentAlert:this.current,
     };
   }
 }
