@@ -1,19 +1,23 @@
 {
-  "name": "hey-streamer-notice-alert-donation",
+  "name": "hsnad-hey-streamer",
   "version": "1.0.0",
-  "description": "All-in-one donation alert system for streamers — Saweria, Trakteer, and more in one OBS source",
+  "description": "HEY Streamer, Notice Alert Donation — All-in-one alert system untuk streamer Indonesia",
   "main": "src/main/main.js",
   "homepage": "./",
-  "author": "noobiiefun",
+  "author": {
+    "name": "noobiiefun",
+    "url": "https://github.com/noobiiefun"
+  },
   "license": "MIT",
   "scripts": {
-    "dev": "concurrently \"npm run dev:react\" \"wait-on http://localhost:3000 && npm run dev:electron\"",
+    "dev": "concurrently -n REACT,ELECTRON -c cyan,yellow \"npm run dev:react\" \"wait-on http://localhost:3000 && npm run dev:electron\"",
     "dev:react": "cross-env BROWSER=none react-scripts start",
     "dev:electron": "cross-env NODE_ENV=development electron .",
-    "build": "npm run build:react && npm run build:electron",
+    "build": "npm run build:check && npm run build:react && npm run build:exe",
     "build:react": "react-scripts build",
-    "build:electron": "electron-builder --win --x64",
-    "pack": "electron-builder --dir",
+    "build:exe": "electron-builder --config electron-builder.yml --win --x64",
+    "build:check": "node scripts/prebuild.js",
+    "pack": "electron-builder --config electron-builder.yml --dir",
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
@@ -36,39 +40,6 @@
     "electron-builder": "^24.9.1",
     "react-scripts": "5.0.1",
     "wait-on": "^7.2.0"
-  },
-  "build": {
-    "appId": "com.noobiiefun.hsnad",
-    "productName": "HSNAD - Hey Streamer",
-    "directories": {
-      "buildResources": "build-assets",
-      "output": "dist"
-    },
-    "files": [
-      "build/**/*",
-      "src/main/**/*",
-      "src/server/**/*",
-      "src/shared/**/*",
-      "overlay/**/*",
-      "node_modules/**/*",
-      "package.json"
-    ],
-    "extraResources": [
-      { "from": "overlay",       "to": "overlay" },
-      { "from": "public/sounds", "to": "sounds" },
-      { "from": "build-assets",  "to": "build-assets" }
-    ],
-    "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
-      "icon": "build-assets/icon.ico"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "HSNAD - Hey Streamer"
-    }
   },
   "browserslist": {
     "production": [">0.2%", "not dead", "not op_mini all"],

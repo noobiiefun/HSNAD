@@ -1,7 +1,29 @@
+# Dependencies
 node_modules/
+
+# Build outputs
 dist/
 build/
+release/
+
+# Env
 .env
-*.log
+.env.local
+.env.production
+
+# OS
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Electron
+out/

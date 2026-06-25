@@ -1,0 +1,95 @@
+appId: com.noobiiefun.hsnad
+productName: HSNAD - Hey Streamer
+copyright: "Copyright © 2024 noobiiefun"
+
+# ── Direktori ────────────────────────────────────────────────────────────────
+directories:
+  buildResources: build-assets
+  output: dist
+
+# ── File yang dipackage ke dalam .exe ────────────────────────────────────────
+files:
+  # React build output
+  - build/**/*
+  # Electron main process & server
+  - src/main/**/*
+  - src/server/**/*
+  - src/shared/**/*
+  # Node modules
+  - node_modules/**/*
+  - package.json
+  # Exclude file yang tidak perlu
+  - "!node_modules/.cache/**/*"
+  - "!node_modules/**/{CHANGELOG.md,README.md,readme.md,*.map}"
+  - "!**/*.{iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}"
+  - "!.editorconfig"
+  - "!**/._*"
+  - "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore}"
+  - "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+  - "!src/renderer/**/*"
+
+# ── Extra resources (di luar asar, bisa diakses via process.resourcesPath) ──
+extraResources:
+  - from: overlay
+    to: overlay
+    filter:
+      - "**/*"
+  - from: public/sounds
+    to: sounds
+    filter:
+      - "*.wav"
+      - "*.mp3"
+      - "*.ogg"
+  - from: build-assets
+    to: build-assets
+    filter:
+      - "*.png"
+      - "*.ico"
+
+# ── ASAR packaging ────────────────────────────────────────────────────────────
+asar: true
+asarUnpack:
+  # electron-store perlu akses filesystem langsung
+  - "node_modules/electron-store/**/*"
+  - "node_modules/conf/**/*"
+  - "node_modules/atomically/**/*"
+
+# ── Windows ───────────────────────────────────────────────────────────────────
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build-assets/icon.ico
+  # Metadata yang muncul di Properties file .exe
+  fileAssociations: []
+
+# ── NSIS Installer ────────────────────────────────────────────────────────────
+nsis:
+  # Installer tidak one-click, user bisa pilih folder
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+
+  # Shortcut
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: "HSNAD - Hey Streamer"
+
+  # Installer UI
+  installerIcon: build-assets/icon.ico
+  uninstallerIcon: build-assets/icon.ico
+  installerHeaderIcon: build-assets/icon.ico
+
+  # Nama yang muncul di installer
+  artifactName: "HSNAD-Setup-${version}.exe"
+
+  # Custom NSIS script tambahan (opsional)
+  # include: build-assets/installer.nsh
+
+  # Registry untuk uninstall
+  deleteAppDataOnUninstall: false
+
+  # Menu
+  menuCategory: "Streaming Tools"
